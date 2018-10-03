@@ -2,7 +2,7 @@ const piexif = require('piexifjs')
 const { resolve } = require('../utils')
 
 module.exports = function imageProcess (opts) {
-  const { stripExif, resize } = opts
+  const { quality = 0.85, resize, stripExif } = opts
 
   return function (doc, cb) {
     var orientation = 0
@@ -30,7 +30,7 @@ module.exports = function imageProcess (opts) {
             doc.blob = blob
             delete doc.data
             cb(null, doc)
-          }, doc.mimeType, 0.85)
+          }, doc.mimeType, quality)
         } else {
           cb(null, doc)
         }

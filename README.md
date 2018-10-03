@@ -44,6 +44,7 @@ var fileInput = h('input', {
 {
   stripExif: Boolean,   // (default: false) removes exif data from images (geo-location, camera meta data, etc)
   resize: Object,       // (default: undefined) resizes image if possible. Expected properties: width, height
+  quality: Number,      // (default: 0.85) tune the compression of jpegs. value between 0 and 1
   isPrivate: Boolean    // (default: false) encrypts the blob
 }
 ```

@@ -9,12 +9,12 @@ module.exports = function blobFiles (files, server, opts, cb) {
   if (!files.length) return
   if (typeof opts === 'function') return blobFiles(files, server, {}, opts)
 
-  const { stripExif, resize, isPrivate } = opts
+  const { stripExif, resize, quality, isPrivate } = opts
 
   pull(
     pull.values(files),
     pull.asyncMap(buildFileDoc),
-    pull.asyncMap(imageProcess({ stripExif, resize })),
+    pull.asyncMap(imageProcess({ stripExif, resize, quality })),
     pull.asyncMap(blobify),
     pull.asyncMap(publishBlob({ server, isPrivate })),
     pull.drain(

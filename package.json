@@ -1,6 +1,6 @@
 {
   "name": "ssb-blob-files",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "handle processing and addition of files to the blob store",
   "main": "index.js",
   "scripts": {

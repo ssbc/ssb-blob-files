@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/ssbc/ssb-blob-files#readme",
   "dependencies": {
-    "crypto": "^1.0.1",
     "piexifjs": "^1.0.4",
     "pull-box-stream": "^1.0.13",
     "pull-defer": "^0.2.3",

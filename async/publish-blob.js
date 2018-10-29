@@ -1,4 +1,4 @@
-const pull = Object.assign(require('pull-stream'), {
+const pull = Object.assign({}, require('pull-stream'), {
   defer: require('pull-defer'),
   boxStream: require('pull-box-stream'),
   addBlob: AddBlobSink

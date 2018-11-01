@@ -1,8 +1,6 @@
-const pull = Object.assign({}, require('pull-stream'), {
-  defer: require('pull-defer'),
-  boxStream: require('pull-box-stream'),
-  addBlob: AddBlobSink
-})
+const pull = require('pull-stream')
+const pullDefer = require('pull-defer')
+const pullBoxStream = require('pull-box-stream')
 const split = require('split-buffer')
 const crypto = require('crypto')
 const zeros = Buffer.alloc(24, 0)
@@ -27,7 +25,7 @@ module.exports = function publishBlob ({ server, isPrivate }) {
 
       pull(
         pull.values(split(new Buffer(reader.result), 64 * 1024)),
-        pull.addBlob({ server, encrypt: resolve(isPrivate) }, (err, link) => {
+        pullAddBlobSink({ server, encrypt: resolve(isPrivate) }, (err, link) => {
           if (err) return cb(err)
 
           cb(null, { link, name, size, type })
@@ -38,8 +36,8 @@ module.exports = function publishBlob ({ server, isPrivate }) {
   }
 }
 
-function AddBlobSink ({ server, encrypt = false }, cb) {
-  var sink = pull.defer.sink()
+function pullAddBlobSink ({ server, encrypt = false }, cb) {
+  var sink = pullDefer.sink()
 
   onceTrue(server, sbot => {
     if (!encrypt) {
@@ -58,7 +56,7 @@ function AddBlobSink ({ server, encrypt = false }, cb) {
       if (err) return cb(err)
       pull(
         pull.once(Buffer.concat(buffers)),
-        pull.boxStream.createBoxStream(key, zeros),
+        pullBoxStream.createBoxStream(key, zeros),
         Hash(function (err, buffers, hash) {
           if (err) return cb(err)
           var id = '&' + hash.toString('base64') + '.sha256'

@@ -31,18 +31,29 @@ module.exports = function blobFiles (files, server, opts, cb) {
       }
     )
   )
-}
 
-function buildFileDoc (file, cb) {
-  const reader = new global.FileReader()
-  reader.onload = function (e) {
-    cb(null, {
-      name: file.name,
-      mimeType: mime(file.name),
-      data: e.target.result
-    })
+  function buildFileDoc (file, cb) {
+    if (resize || file.size < MAX_SIZE) {
+      const reader = new global.FileReader()
+      reader.onload = function (e) {
+        cb(null, {
+          name: file.name,
+          mimeType: mime(file.name),
+          data: e.target.result
+        })
+      }
+      reader.readAsDataURL(file)
+    } else {
+      // files larger than 20 MB or so will take a long time to process with readAsDataURL
+      // larger than 100 MB and they might lock up the entire app (fill the ram)
+      // We'll just bail before it gets serious! (since ssb can only accept files < 5 MB anyway)
+      cb(new MaxSizeError({
+        fileName: file.name,
+        fileSize: file.size,
+        maxSize: MAX_SIZE
+      }))
+    }
   }
-  reader.readAsDataURL(file)
 }
 
 // re-export error so that it can be used to check the type

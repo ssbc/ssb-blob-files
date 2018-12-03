@@ -11,14 +11,13 @@ module.exports = function blobFiles (files, server, opts, cb) {
   if (!files.length) return
   if (typeof opts === 'function') return blobFiles(files, server, {}, opts)
 
-  const { stripExif, resize, quality, isPrivate } = opts
-
+  const { stripExif, resize, quality, isPrivate, maxSize = MAX_SIZE } = opts
   pull(
     pull.values(files),
     pull.asyncMap(buildFileDoc),
     pull.asyncMap(imageProcess({ stripExif, resize, quality })),
     pull.asyncMap(blobify),
-    pull.asyncMap(publishBlob({ server, isPrivate, maxSize: MAX_SIZE })),
+    pull.asyncMap(publishBlob({ server, isPrivate, maxSize })),
     pull.drain(
       result => {
         // this catches the maxSize errors from publishBlob
@@ -33,7 +32,7 @@ module.exports = function blobFiles (files, server, opts, cb) {
   )
 
   function buildFileDoc (file, cb) {
-    if (resize || file.size < MAX_SIZE) {
+    if (resize || file.size < maxSize) {
       const reader = new global.FileReader()
       reader.onload = function (e) {
         cb(null, {
@@ -50,7 +49,7 @@ module.exports = function blobFiles (files, server, opts, cb) {
       cb(new MaxSizeError({
         fileName: file.name,
         fileSize: file.size,
-        maxSize: MAX_SIZE
+        maxFileSize: maxSize
       }))
     }
   }

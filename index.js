@@ -4,6 +4,8 @@ const mime = require('simple-mime')('application/octect-stream')
 const imageProcess = require('./async/image-process')
 const blobify = require('./async/blobify')
 const publishBlob = require('./async/publish-blob')
+const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const MaxSizeError = require('./lib/max-size-error')
 
 module.exports = function blobFiles (files, server, opts, cb) {
   if (!files.length) return
@@ -16,7 +18,7 @@ module.exports = function blobFiles (files, server, opts, cb) {
     pull.asyncMap(buildFileDoc),
     pull.asyncMap(imageProcess({ stripExif, resize, quality })),
     pull.asyncMap(blobify),
-    pull.asyncMap(publishBlob({ server, isPrivate })),
+    pull.asyncMap(publishBlob({ server, isPrivate, maxSize: MAX_SIZE })),
     pull.drain(
       result => {
         // this catches the maxSize errors from publishBlob
@@ -42,3 +44,6 @@ function buildFileDoc (file, cb) {
   }
   reader.readAsDataURL(file)
 }
+
+// re-export error so that it can be used to check the type
+module.exports.MaxSizeError = MaxSizeError

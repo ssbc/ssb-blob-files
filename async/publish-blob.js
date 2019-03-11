@@ -3,12 +3,11 @@ const pullDefer = require('pull-defer')
 const pullBoxStream = require('pull-box-stream')
 const split = require('split-buffer')
 const crypto = require('crypto')
+const MaxSizeError = require('../lib/max-size-error')
 const zeros = Buffer.alloc(24, 0)
 const { resolve, onceTrue } = require('../utils')
 
-const MAX_SIZE = 5 * 1024 * 1024 // 5MB
-
-module.exports = function publishBlob ({ server, isPrivate }) {
+module.exports = function publishBlob ({ server, isPrivate, maxSize }) {
   return function (doc, cb) {
     const { name, mimeType: type, blob } = doc
 
@@ -17,14 +16,16 @@ module.exports = function publishBlob ({ server, isPrivate }) {
       // TODO bail out and run onError(?) if size > 5MB
 
       const size = reader.result.length || reader.result.byteLength
-      if (size > MAX_SIZE) {
-        const humanSize = Math.ceil(size / (1024 * 1024) * 10) / 10
-        cb(null, new Error(`${name} (${humanSize} MB) is larger than the allowed limit of 5MB `))
-        return
+      if (size > maxSize) {
+        return cb(null, new MaxSizeError({
+          fileSize: size,
+          fileName: name,
+          maxFileSize: maxSize
+        }))
       }
 
       pull(
-        pull.values(split(new Buffer(reader.result), 64 * 1024)),
+        pull.values(split(Buffer.from(reader.result), 64 * 1024)),
         pullAddBlobSink({ server, encrypt: resolve(isPrivate) }, (err, link) => {
           if (err) return cb(err)
 
@@ -87,7 +88,7 @@ function Hash (cb) {
 
   return pull.drain(
     data => {
-      data = typeof data === 'string' ? new Buffer(data) : data
+      data = typeof data === 'string' ? Buffer.from(data) : data
       buffers.push(data)
       hash.update(data)
     },

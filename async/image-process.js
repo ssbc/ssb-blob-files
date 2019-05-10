@@ -9,7 +9,7 @@ module.exports = function imageProcess (opts) {
     if (doc.mimeType === 'image/jpeg') {
       try {
         orientation = getOrientation(doc.data)
-        if (resolve(stripExif) === 'true') doc.data = removeExif(doc.data, orientation)
+        if (resolve(stripExif) === true) doc.data = removeExif(doc.data, orientation)
       } catch (ex) {
         console.log('exif exception:', ex)
       }

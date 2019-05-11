@@ -1,5 +1,5 @@
 const pull = require('pull-stream')
-const mime = require('simple-mime')('application/octect-stream')
+const mime = require('simple-mime')('application/octet-stream')
 
 const imageProcess = require('./async/image-process')
 const blobify = require('./async/blobify')

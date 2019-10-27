@@ -46,29 +46,25 @@ function getImage (data, cb) {
   image.onload = () => cb(image)
   image.src = data
   image.style.display = 'block'
-  if (image.complete) cb(image)
+  //if (image.complete) cb(image)
 }
 
 function doResize (image, width, height) {
-  var imageHeight = image.height
-  var imageWidth = image.width
+  if (image.height < height && image.width < width)
+    return image
 
-  var multiplier = (height / image.height)
-  if (multiplier * imageWidth < width) {
-    multiplier = width / image.width
-  }
+  var ratioX = width / image.width
+  var ratioY = height / image.height
+  var ratio = Math.min(ratioX, ratioY)
 
-  var finalWidth = imageWidth * multiplier
-  var finalHeight = imageHeight * multiplier
-
-  var offsetX = (finalWidth - width) / 2
-  var offsetY = (finalHeight - height) / 2
+  var finalWidth = image.width * ratio
+  var finalHeight = image.height * ratio
 
   var canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
+  canvas.width = finalWidth
+  canvas.height = finalHeight
   var ctx = canvas.getContext('2d')
-  ctx.drawImage(image, -offsetX, -offsetY, finalWidth, finalHeight)
+  ctx.drawImage(image, 0, 0, finalWidth, finalHeight)
   return canvas
 }
 

@@ -1,4 +1,5 @@
 const piexif = require('piexifjs')
+const resizeDimensions = require('../lib/resize-dimensions')
 const { resolve } = require('../utils')
 
 module.exports = function imageProcess (opts) {
@@ -53,18 +54,15 @@ function doResize (image, width, height) {
   if (image.height < height && image.width < width)
     return image
 
-  var ratioX = width / image.width
-  var ratioY = height / image.height
-  var ratio = Math.min(ratioX, ratioY)
-
-  var finalWidth = image.width * ratio
-  var finalHeight = image.height * ratio
+  const final = resizeDimensions(width, height, image)
 
   var canvas = document.createElement('canvas')
-  canvas.width = finalWidth
-  canvas.height = finalHeight
+  canvas.width = final.width
+  canvas.height = final.height
+
   var ctx = canvas.getContext('2d')
-  ctx.drawImage(image, 0, 0, finalWidth, finalHeight)
+  ctx.drawImage(image, final.x, final.y, final.width, final.height)
+
   return canvas
 }
 

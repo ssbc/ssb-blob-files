@@ -11,7 +11,7 @@ module.exports = function publishBlob ({ server, isPrivate, maxSize }) {
   return function (doc, cb) {
     const { name, mimeType: type, blob } = doc
 
-    var reader = new global.FileReader()
+    var reader = new FileReader()
     reader.onload = function () {
       // TODO bail out and run onError(?) if size > 5MB
 
@@ -42,41 +42,50 @@ function pullAddBlobSink ({ server, encrypt = false }, cb) {
 
   onceTrue(server, sbot => {
     if (!encrypt) {
-      sink.resolve(sbot.blobs.add(cb))
-      return
-    }
-
-    // FROM: https://github.com/ssbc/ssb-secret-blob/blob/master/index.js
-    // here we need to hash something twice, first, hash the plain text to use as the
-    // key. This has the benefit of encrypting deterministically - the same file will
-    // have the same hash. This can be used to deduplicate storage, but has privacy
-    // implications. I do it here just because it's early days and this makes testing
-    // easier.
-
-    sink.resolve(Hash(function (err, buffers, key) {
-      if (err) return cb(err)
-      pull(
-        pull.once(Buffer.concat(buffers)),
-        pullBoxStream.createBoxStream(key, zeros),
-        Hash(function (err, buffers, hash) {
+      sink.resolve(Hash(function (err, buffers, hash) {
+        var id = '&' + hash.toString('base64') + '.sha256'
+        sbot.blobs.add(id, new Blob(buffers), (err) => {
           if (err) return cb(err)
-          var id = '&' + hash.toString('base64') + '.sha256'
 
-          pull(
-            pull.values(buffers),
-            sbot.blobs.add(id, function (err) {
+          cb(null, id)
+        })
+      }))
+    }
+    else
+    {
+      // FROM: https://github.com/ssbc/ssb-secret-blob/blob/master/index.js
+      // here we need to hash something twice, first, hash the plain text to use as the
+      // key. This has the benefit of encrypting deterministically - the same file will
+      // have the same hash. This can be used to deduplicate storage, but has privacy
+      // implications. I do it here just because it's early days and this makes testing
+      // easier.
+
+      sink.resolve(Hash(function (err, buffers, key) {
+        if (err) return cb(err)
+        pull(
+          pull.once(Buffer.concat(buffers)),
+          pullBoxStream.createBoxStream(key, zeros),
+          Hash(function (err, encryptedBuffers, hash) {
+            if (err) return cb(err)
+            var id = '&' + hash.toString('base64') + '.sha256'
+
+            sbot.blobs.addPrivate(id, new Blob(buffers), () => {
               if (err) return cb(err)
 
-              sbot.blobs.push(id, function (err) {
+              sbot.blobs.add(id, new Blob(encryptedBuffers), function (err) {
                 if (err) return cb(err)
 
-                cb(null, id + '?unbox=' + key.toString('base64') + '.boxs')
+                sbot.blobs.push(id, function (err) {
+                  if (err) return cb(err)
+
+                  cb(null, id + '?unbox=' + key.toString('base64') + '.boxs')
+                })
               })
             })
-          )
-        })
-      )
-    }))
+          })
+        )
+      }))
+    }
   })
 
   return sink

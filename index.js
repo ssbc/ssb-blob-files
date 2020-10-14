@@ -33,7 +33,7 @@ module.exports = function blobFiles (files, server, opts, cb) {
 
   function buildFileDoc (file, cb) {
     if (resize || file.size < maxSize) {
-      const reader = new global.FileReader()
+      const reader = new FileReader()
       reader.onload = function (e) {
         cb(null, {
           name: file.name,

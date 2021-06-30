@@ -17,7 +17,8 @@ module.exports = function imageProcess (opts) {
     }
 
     // handle exif orientation data and resize
-    if (orientation >= 3 || resize) {
+    if ((doc.mimeType === 'image/jpeg' || doc.mimeType === 'image/png') &&
+        (orientation >= 3 || resize)) {
       getImage(doc.data, (image) => {
         image = rotate(image, orientation)
         if (resize) {
